@@ -1,0 +1,28 @@
+{
+  "name": "readtrack-api",
+  "version": "1.0.0",
+  "description": "ReadTrack API - Reading tracking and book management backend",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [
+    "readtrack",
+    "api",
+    "express",
+    "postgres"
+  ],
+  "author": "Dagem Alemayehu",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "nodemon": "^3.1.14",
+    "pg": "^8.23.1"
+  }
+}
