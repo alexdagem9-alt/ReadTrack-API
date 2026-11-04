@@ -26,6 +26,19 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+app.get('/db_test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({
+      message: "database connected successfully",
+      time: result.rows[0].now
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 // Database connection verification
 pool.connect((err, client, release) => {
@@ -36,7 +49,20 @@ pool.connect((err, client, release) => {
   console.log(`Connected to PostgreSQL database (${process.env.DB_NAME || 'readtrack'}) successfully`);
   release();
 });
+app.get('/api/books', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM books ORDER BY id DESC'
+    );
 
+    res.json(result.rows);
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to fetch books'
+    });
+  }
+});
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
