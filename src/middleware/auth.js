@@ -1,10 +1,10 @@
+
 import jwt from 'jsonwebtoken';
 
 export const authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Check if token exists
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         message: 'Access denied. No token provided.'
@@ -13,20 +13,46 @@ export const authenticateToken = (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
-    // Verify token
+    if (!token) {
+      return res.status(401).json({
+        message: 'Access denied. Token is missing.'
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not configured');
+
+      return res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
+
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      {
+        algorithms: ['HS256']
+      }
     );
 
-    // Attach user information
     req.user = decoded;
 
     next();
 
   } catch (error) {
-    return res.status(403).json({
-      message: 'Invalid or expired token'
+    if (
+      error.name === 'TokenExpiredError' ||
+      error.name === 'JsonWebTokenError'
+    ) {
+      return res.status(401).json({
+        message: 'Invalid or expired token'
+      });
+    }
+
+    console.error('Authentication error:', error);
+
+    return res.status(500).json({
+      message: 'Internal server error'
     });
   }
 };

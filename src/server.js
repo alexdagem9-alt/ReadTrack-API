@@ -4,17 +4,20 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import pool from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
-
+import bookRoutes from './routes/bookRoutes.js';
+// Load environment variables
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
+// MIDDLEWARES
 app.use(cors());
 app.use(express.json());
 
-// Home route
+
+// HOME ROUTE
+
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to ReadTrack API!',
@@ -22,7 +25,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check
+// HEALTH CHECK
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -30,43 +34,36 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Database test
+// DATABASE TEST
+
 app.get('/db_test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
 
-    res.json({
+    res.status(200).json({
       message: 'Database connected successfully',
       time: result.rows[0].now
     });
+
   } catch (error) {
-    console.error(error);
+    console.error('Database test error:', error);
+
     res.status(500).json({
-      error: error.message
+      message: 'Internal server error'
     });
   }
 });
 
-// Get all books
-app.get('/api/books', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM books ORDER BY id DESC'
-    );
+// USER ROUTES
 
-    res.json(result.rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: 'Failed to fetch books'
-    });
-  }
-});
-
-// User routes
 app.use('/api/users', userRoutes);
 
-// Database connection verification
+// BOOK ROUTES
+
+app.use('/api/books', bookRoutes);
+
+// DATABASE CONNECTION CHECK
+
 pool.connect((err, client, release) => {
   if (err) {
     console.error('Database connection error:', err.message);
@@ -80,7 +77,7 @@ pool.connect((err, client, release) => {
   release();
 });
 
-// Start server
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
