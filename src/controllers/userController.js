@@ -8,7 +8,6 @@ export const registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
-        // Validate inputs
         if (!username || !email || !password) {
             return res.status(400).json({
                 message: 'Username, email and password are required'
@@ -21,7 +20,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Check existing email
         const existingUser = await pool.query(
             'SELECT id FROM users WHERE email = $1',
             [email]
@@ -33,12 +31,10 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert user
         const result = await pool.query(
-            `INSERT INTO users (username, email, password)
+            `INSERT INTO users (username, email, password_hash)
              VALUES ($1, $2, $3)
              RETURNING id, username, email`,
             [username, email, hashedPassword]
@@ -64,16 +60,14 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate inputs
         if (!email || !password) {
             return res.status(400).json({
                 message: 'Email and password are required'
             });
         }
 
-        // Find user
         const result = await pool.query(
-            'SELECT id, username, email, password FROM users WHERE email = $1',
+            'SELECT id, username, email, password_hash FROM users WHERE email = $1',
             [email]
         );
 
@@ -85,10 +79,9 @@ export const loginUser = async (req, res) => {
 
         const user = result.rows[0];
 
-        // Compare password
         const isMatch = await bcrypt.compare(
             password,
-            user.password
+            user.password_hash
         );
 
         if (!isMatch) {
@@ -97,12 +90,10 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Check JWT secret
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not configured');
         }
 
-        // Generate token
         const token = jwt.sign(
             {
                 id: user.id,
@@ -130,17 +121,18 @@ export const loginUser = async (req, res) => {
             message: 'Internal server error'
         });
     }
-}
+};
+
+
 // GET CURRENT USER (PROTECTED)
 export const getMe = async (req, res) => {
     try {
-        // Get user ID from verified JWT
         const userId = req.user.id;
 
         const result = await pool.query(
             `SELECT id, username, email
-       FROM users
-       WHERE id = $1`,
+             FROM users
+             WHERE id = $1`,
             [userId]
         );
 
